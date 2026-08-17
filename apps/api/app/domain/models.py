@@ -1,0 +1,90 @@
+# TODO: Future phases will add templates, contacts, campaigns, messages, imports, inbox checks, and audit logs.
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.infrastructure.database import Base
+
+
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    users: Mapped[list["User"]] = relationship(back_populates="role")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    role: Mapped["Role"] = relationship(back_populates="users")
+    api_keys: Mapped[list["APIKey"]] = relationship(back_populates="user")
+
+
+class APIKey(Base):
+    __tablename__ = "api_keys"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    key_prefix: Mapped[str] = mapped_column(String(12), nullable=False)
+    key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="api_keys")
+
+
+class SMTPProvider(Base):
+    __tablename__ = "smtp_providers"
+    __table_args__ = (UniqueConstraint("name", name="uq_smtp_providers_name"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    host: Mapped[str] = mapped_column(String(255), nullable=False)
+    port: Mapped[int] = mapped_column(Integer, nullable=False)
+    username: Mapped[str | None] = mapped_column(String(255))
+    password_encrypted: Mapped[str | None] = mapped_column(Text)
+    use_tls: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    sender_identities: Mapped[list["SenderIdentity"]] = relationship(back_populates="smtp_provider")
+
+
+class SenderIdentity(Base):
+    __tablename__ = "sender_identities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    smtp_provider_id: Mapped[int] = mapped_column(ForeignKey("smtp_providers.id"), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    from_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    reply_to_email: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    smtp_provider: Mapped["SMTPProvider"] = relationship(back_populates="sender_identities")
