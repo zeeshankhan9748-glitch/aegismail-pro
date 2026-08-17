@@ -148,3 +148,82 @@ export type TemplateValidateResponse = {
   valid: boolean;
   missing_placeholders: string[];
 };
+
+// ---------------------------------------------------------------------------
+// Phase 4: Contacts, Contact Lists, Suppression, Import Jobs
+// ---------------------------------------------------------------------------
+
+export type ContactStatus = 'active' | 'unsubscribed' | 'bounced' | 'complained';
+
+export type Contact = {
+  id: number;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  custom_fields: Record<string, unknown> | null;
+  status: ContactStatus;
+  created_at: string;
+  updated_at: string;
+  list_count: number;
+};
+
+export type ContactCreate = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  custom_fields?: Record<string, unknown>;
+  status?: ContactStatus;
+};
+
+export type ContactUpdate = Partial<ContactCreate>;
+
+export type ContactList = {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  member_count: number;
+};
+
+export type ContactListCreate = {
+  name: string;
+  description?: string;
+};
+
+export type ContactListMember = {
+  id: number;
+  contact_list_id: number;
+  contact_id: number;
+  added_at: string;
+};
+
+export type SuppressionEntry = {
+  id: number;
+  email: string;
+  reason: string;
+  source: string;
+  created_at: string;
+};
+
+export type SuppressionCheckResponse = {
+  email: string;
+  suppressed: boolean;
+  reason: string | null;
+  source: string | null;
+};
+
+export type ImportJob = {
+  id: number;
+  filename: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  total_rows: number;
+  processed_rows: number;
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  error_report: Array<{ row: number; error: string }> | null;
+  contact_list_id: number | null;
+  created_at: string;
+  completed_at: string | null;
+};

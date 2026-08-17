@@ -238,3 +238,131 @@ class TemplateValidateRequest(BaseModel):
 class TemplateValidateResponse(BaseModel):
     valid: bool
     missing_placeholders: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Contacts, Contact Lists, Suppression, Import Jobs
+# ---------------------------------------------------------------------------
+
+VALID_CONTACT_STATUSES = {"active", "unsubscribed", "bounced", "complained"}
+VALID_SUPPRESSION_REASONS = {"unsubscribed", "bounced", "complained", "manual"}
+
+
+class ContactCreate(BaseModel):
+    email: EmailStr
+    first_name: str | None = Field(default=None, max_length=120)
+    last_name: str | None = Field(default=None, max_length=120)
+    custom_fields: dict | None = None
+    status: str = Field(default="active")
+
+    @model_validator(mode="after")
+    def validate_status(self) -> "ContactCreate":
+        if self.status not in VALID_CONTACT_STATUSES:
+            raise ValueError(f"status must be one of: {', '.join(sorted(VALID_CONTACT_STATUSES))}")
+        return self
+
+
+class ContactUpdate(BaseModel):
+    email: EmailStr | None = None
+    first_name: str | None = Field(default=None, max_length=120)
+    last_name: str | None = Field(default=None, max_length=120)
+    custom_fields: dict | None = None
+    status: str | None = None
+
+    @model_validator(mode="after")
+    def validate_status(self) -> "ContactUpdate":
+        if self.status is not None and self.status not in VALID_CONTACT_STATUSES:
+            raise ValueError(f"status must be one of: {', '.join(sorted(VALID_CONTACT_STATUSES))}")
+        return self
+
+
+class ContactRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    first_name: str | None
+    last_name: str | None
+    custom_fields: dict | None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    list_count: int = 0
+
+
+class ContactListCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = None
+
+
+class ContactListUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = None
+
+
+class ContactListRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    created_at: datetime
+    updated_at: datetime
+    member_count: int = 0
+
+
+class ContactListMemberRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    contact_list_id: int
+    contact_id: int
+    added_at: datetime
+
+
+class SuppressionEntryCreate(BaseModel):
+    email: EmailStr
+    reason: str = Field(default="manual")
+    source: str = Field(default="manual", max_length=64)
+
+    @model_validator(mode="after")
+    def validate_reason(self) -> "SuppressionEntryCreate":
+        if self.reason not in VALID_SUPPRESSION_REASONS:
+            raise ValueError(
+                f"reason must be one of: {', '.join(sorted(VALID_SUPPRESSION_REASONS))}"
+            )
+        return self
+
+
+class SuppressionEntryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    reason: str
+    source: str
+    created_at: datetime
+
+
+class SuppressionCheckResponse(BaseModel):
+    email: str
+    suppressed: bool
+    reason: str | None
+    source: str | None
+
+
+class ImportJobRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    filename: str
+    status: str
+    total_rows: int
+    processed_rows: int
+    imported_count: int
+    skipped_count: int
+    error_count: int
+    error_report: list | None
+    contact_list_id: int | None
+    created_at: datetime
+    completed_at: datetime | None

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database import Base
@@ -172,3 +172,112 @@ class TemplateVersion(Base):
         back_populates="versions",
         foreign_keys="[TemplateVersion.template_id]",
     )
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Contacts, Contact Lists, Suppression, Import Jobs
+# ---------------------------------------------------------------------------
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String(120))
+    last_name: Mapped[str | None] = mapped_column(String(120))
+    custom_fields: Mapped[dict | None] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(
+        String(32), default="active", nullable=False
+    )  # active / unsubscribed / bounced / complained
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    list_memberships: Mapped[list["ContactListMember"]] = relationship(
+        back_populates="contact", cascade="all, delete-orphan"
+    )
+
+
+class ContactList(Base):
+    __tablename__ = "contact_lists"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    members: Mapped[list["ContactListMember"]] = relationship(
+        back_populates="contact_list", cascade="all, delete-orphan"
+    )
+
+
+class ContactListMember(Base):
+    __tablename__ = "contact_list_members"
+    __table_args__ = (
+        UniqueConstraint("contact_list_id", "contact_id", name="uq_list_member"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    contact_list_id: Mapped[int] = mapped_column(
+        ForeignKey("contact_lists.id", ondelete="CASCADE"), nullable=False
+    )
+    contact_id: Mapped[int] = mapped_column(
+        ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
+    )
+    added_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    contact_list: Mapped["ContactList"] = relationship(back_populates="members")
+    contact: Mapped["Contact"] = relationship(back_populates="list_memberships")
+
+
+class SuppressionEntry(Base):
+    __tablename__ = "suppression_entries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    reason: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # unsubscribed / bounced / complained / manual
+    source: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="manual"
+    )  # import / manual / bounce_webhook / etc.
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(32), default="pending", nullable=False
+    )  # pending / processing / completed / failed
+    total_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    processed_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    skipped_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_report: Mapped[list | None] = mapped_column(JSON)  # list of {row, error}
+    contact_list_id: Mapped[int | None] = mapped_column(
+        ForeignKey("contact_lists.id", ondelete="SET NULL"), nullable=True
+    )
+    # CSV data stored as text for the worker to process
+    csv_data: Mapped[str | None] = mapped_column(Text)
+    # Column mapping: JSON dict e.g. {"email": "Email Address", "first_name": "First Name"}
+    column_mapping: Mapped[dict | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

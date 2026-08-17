@@ -15,6 +15,9 @@ from app.interfaces.routers import (
     smtp_providers,
     templates,
 )
+from app.interfaces.routers.contacts import lists_router, router as contacts_router
+from app.interfaces.routers.suppression import router as suppression_router
+from app.interfaces.routers.import_jobs import router as import_jobs_router
 from app.logging import configure_logging
 from app.rate_limit import limiter
 from app.settings import get_settings
@@ -50,6 +53,10 @@ def create_app() -> FastAPI:
     app.include_router(sender_identities.router, prefix="/api/v1")
     app.include_router(messages.router, prefix="/api/v1")
     app.include_router(templates.router, prefix="/api/v1")
+    app.include_router(contacts_router, prefix="/api/v1")
+    app.include_router(lists_router, prefix="/api/v1")
+    app.include_router(suppression_router, prefix="/api/v1")
+    app.include_router(import_jobs_router, prefix="/api/v1")
     Instrumentator().instrument(app).expose(app, include_in_schema=False, should_gzip=True)
     return app
 
