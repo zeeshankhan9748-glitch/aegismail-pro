@@ -50,7 +50,7 @@ def upgrade() -> None:
         sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('key_prefix', sa.String(length=12), nullable=False),
-        sa.Column('key_hash', sa.String(length=64), nullable=False, unique=True),
+        sa.Column('key_hash', sa.String(length=255), nullable=False),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     )

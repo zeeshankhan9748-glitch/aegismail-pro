@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.application.security import decode_access_token, hash_api_key
+from app.application.security import decode_access_token, verify_api_key
 from app.domain.models import APIKey, User
 from app.infrastructure.database import get_db_session
 
@@ -51,9 +51,15 @@ def get_api_key_record(
 ) -> APIKey:
     if not x_api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing API key")
-    api_key = db.scalar(
-        select(APIKey).where(APIKey.key_hash == hash_api_key(x_api_key), APIKey.is_active.is_(True))
+    candidates = list(
+        db.scalars(
+            select(APIKey).where(
+                APIKey.key_prefix == x_api_key[:8],
+                APIKey.is_active.is_(True),
+            )
+        )
     )
-    if api_key is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
-    return api_key
+    for api_key in candidates:
+        if verify_api_key(x_api_key, api_key.key_hash):
+            return api_key
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")

@@ -1,4 +1,3 @@
-import hashlib
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -46,4 +45,8 @@ def decrypt_secret(secret: str) -> str:
 
 
 def hash_api_key(api_key: str) -> str:
-    return hashlib.sha256(api_key.encode()).hexdigest()
+    return password_hasher.hash(api_key)
+
+
+def verify_api_key(api_key: str, api_key_hash: str) -> bool:
+    return password_hasher.verify(api_key, api_key_hash)
