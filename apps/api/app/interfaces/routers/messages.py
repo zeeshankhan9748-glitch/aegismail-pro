@@ -34,7 +34,9 @@ def send_message(
 
     sender_identity = get_sender_identity(db, payload.sender_identity_id)
     if sender_identity is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sender identity not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Sender identity not found"
+        )
     if sender_identity.smtp_provider_id != provider.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

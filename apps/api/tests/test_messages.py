@@ -113,4 +113,6 @@ def test_send_message_rejects_sender_identity_from_other_provider(client):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Sender identity does not belong to the selected SMTP provider"
+    assert (
+        response.json()["detail"] == "Sender identity does not belong to the selected SMTP provider"
+    )

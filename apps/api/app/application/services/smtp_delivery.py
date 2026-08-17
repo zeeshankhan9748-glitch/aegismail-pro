@@ -2,7 +2,7 @@ import smtplib
 from email.message import EmailMessage
 
 from app.application.security import decrypt_secret
-from app.domain.models import Message, SMTPProvider, SenderIdentity
+from app.domain.models import Message, SenderIdentity, SMTPProvider
 
 SMTP_EXCEPTIONS = (smtplib.SMTPException, OSError, TimeoutError, ValueError)
 
@@ -23,7 +23,9 @@ def open_smtp_connection(provider: SMTPProvider, timeout: int) -> smtplib.SMTP:
             client.ehlo()
 
     if provider.username:
-        password = decrypt_secret(provider.password_encrypted) if provider.password_encrypted else ""
+        password = (
+            decrypt_secret(provider.password_encrypted) if provider.password_encrypted else ""
+        )
         client.login(provider.username, password)
 
     return client

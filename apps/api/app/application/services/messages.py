@@ -9,7 +9,9 @@ def get_message_by_idempotency_key(db: Session, idempotency_key: str) -> Message
     return db.scalar(select(Message).where(Message.idempotency_key == idempotency_key))
 
 
-def create_message(db: Session, payload: MessageSendRequest, idempotency_key: str | None) -> Message:
+def create_message(
+    db: Session, payload: MessageSendRequest, idempotency_key: str | None
+) -> Message:
     message = Message(
         provider_id=payload.provider_id,
         sender_identity_id=payload.sender_identity_id,
@@ -53,9 +55,7 @@ def list_messages(
         count_query = count_query.where(*filters)
 
     rows = list(
-        db.scalars(
-            base_query.order_by(Message.created_at.desc()).limit(limit).offset(offset)
-        )
+        db.scalars(base_query.order_by(Message.created_at.desc()).limit(limit).offset(offset))
     )
     total = db.scalar(count_query) or 0
 

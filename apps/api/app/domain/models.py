@@ -99,7 +99,9 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     provider_id: Mapped[int] = mapped_column(ForeignKey("smtp_providers.id"), nullable=False)
-    sender_identity_id: Mapped[int] = mapped_column(ForeignKey("sender_identities.id"), nullable=False)
+    sender_identity_id: Mapped[int] = mapped_column(
+        ForeignKey("sender_identities.id"), nullable=False
+    )
     recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     body_text: Mapped[str] = mapped_column(Text, nullable=False)

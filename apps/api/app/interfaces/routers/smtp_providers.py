@@ -83,5 +83,7 @@ def test_connection(provider_id: int, db: Session = Depends(get_db)) -> SMTPConn
     provider = get_smtp_provider(db, provider_id)
     if provider is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SMTP provider not found")
-    success, message = test_smtp_connection(provider, timeout=get_settings().smtp_connect_timeout_seconds)
+    success, message = test_smtp_connection(
+        provider, timeout=get_settings().smtp_connect_timeout_seconds
+    )
     return SMTPConnectionTestResponse(success=success, provider_id=provider.id, message=message)
