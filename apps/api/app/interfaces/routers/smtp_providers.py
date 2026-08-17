@@ -30,7 +30,8 @@ def create_item(payload: SMTPProviderCreate, db: Session = Depends(get_db)) -> S
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="SMTP provider already exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A database constraint was violated while creating the SMTP provider",
         ) from exc
     return SMTPProviderRead.model_validate(provider)
 

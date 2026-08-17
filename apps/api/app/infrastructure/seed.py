@@ -1,3 +1,5 @@
+import argparse
+
 from sqlalchemy import select
 
 from app.application.security import (
@@ -13,7 +15,7 @@ from app.settings import get_settings
 ROLE_NAMES = ["admin", "operator", "viewer"]
 
 
-def seed() -> None:
+def seed(show_secrets: bool = False) -> None:
     settings = get_settings()
     Base.metadata.create_all(bind=engine)
     session = SessionLocal()
@@ -77,15 +79,26 @@ def seed() -> None:
             )
 
         session.commit()
-        token = create_access_token(subject=admin.username, role="admin")
         print("Seed complete.")
         print(f"Username: {settings.default_admin_username}")
-        print(f"Password: {settings.default_admin_password}")
-        print(f"Demo bearer token: {token}")
-        print(f"Demo API key: {api_key_value}")
+        if show_secrets:
+            token = create_access_token(subject=admin.username, role="admin")
+            print(f"Password: {settings.default_admin_password}")
+            print(f"Demo bearer token: {token}")
+            print(f"Demo API key: {api_key_value}")
+        else:
+            print("Password, token, and API key output is hidden by default.")
+            print(
+                "Use `python -m app.infrastructure.seed --show-secrets` in local development if needed."
+            )
     finally:
         session.close()
 
 
 if __name__ == "__main__":
-    seed()
+    parser = argparse.ArgumentParser(description="Seed local AegisMail Pro demo data")
+    parser.add_argument(
+        "--show-secrets", action="store_true", help="Print local demo credentials to stdout"
+    )
+    args = parser.parse_args()
+    seed(show_secrets=args.show_secrets)

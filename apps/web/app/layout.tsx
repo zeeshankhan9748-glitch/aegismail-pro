@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 import { AppProviders } from '@/components/app-providers';
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   description: 'Phase 1 scaffold for enterprise email operations.',
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">

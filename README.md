@@ -100,6 +100,8 @@ The seed script creates:
 - a demo sender identity
 - a demo API key
 
+By default the seed script does **not** print secrets to stdout. Use `python -m app.infrastructure.seed --show-secrets` locally if you explicitly need the demo password, JWT, or API key echoed back.
+
 ## Running locally without Docker
 
 ### API
