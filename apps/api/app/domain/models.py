@@ -1,4 +1,3 @@
-# TODO: Future phases will add templates, contacts, campaigns, messages, imports, inbox checks, and audit logs.
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
@@ -120,3 +119,56 @@ class Message(Base):
 
     provider: Mapped["SMTPProvider"] = relationship(back_populates="messages")
     sender_identity: Mapped["SenderIdentity"] = relationship(back_populates="messages")
+
+
+class Template(Base):
+    __tablename__ = "templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    current_version_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("template_versions.id", use_alter=True, name="fk_template_current_version"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    current_version: Mapped["TemplateVersion | None"] = relationship(
+        "TemplateVersion",
+        foreign_keys="[Template.current_version_id]",
+        uselist=False,
+    )
+    versions: Mapped[list["TemplateVersion"]] = relationship(
+        "TemplateVersion",
+        back_populates="template",
+        foreign_keys="[TemplateVersion.template_id]",
+        order_by="TemplateVersion.version_number",
+    )
+
+
+class TemplateVersion(Base):
+    __tablename__ = "template_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    template_id: Mapped[int] = mapped_column(
+        ForeignKey("templates.id", ondelete="CASCADE"), nullable=False
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    subject_template: Mapped[str] = mapped_column(String(255), nullable=False)
+    body_html_template: Mapped[str | None] = mapped_column(Text)
+    body_text_template: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    created_by: Mapped[str | None] = mapped_column(String(255))
+
+    template: Mapped["Template"] = relationship(
+        "Template",
+        back_populates="versions",
+        foreign_keys="[TemplateVersion.template_id]",
+    )

@@ -16,6 +16,8 @@ from app.domain.models import (  # noqa: F401
     Role,
     SenderIdentity,
     SMTPProvider,
+    Template,
+    TemplateVersion,
     User,
 )
 from app.infrastructure.database import Base, engine

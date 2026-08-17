@@ -12,6 +12,8 @@ from app.application.services.messages import (
 )
 from app.application.services.sender_identities import get_sender_identity
 from app.application.services.smtp_providers import get_smtp_provider
+from app.application.services.templates import render_template
+from app.domain.models import Template, TemplateVersion
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -49,6 +51,45 @@ def send_message(
         if existing is not None:
             response.status_code = status.HTTP_200_OK
             return MessageRead.model_validate(existing)
+
+    # ------------------------------------------------------------------ #
+    # Template-based rendering                                             #
+    # ------------------------------------------------------------------ #
+    if payload.template_id is not None:
+        tmpl = db.get(Template, payload.template_id)
+        if tmpl is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+            )
+        version_id = payload.template_version_id or tmpl.current_version_id
+        if version_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Template has no current version",
+            )
+        ver = db.get(TemplateVersion, version_id)
+        if ver is None or ver.template_id != tmpl.id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Template version not found"
+            )
+        variables = payload.variables or {}
+        rendered = render_template(
+            ver.subject_template,
+            ver.body_html_template,
+            ver.body_text_template,
+            variables,
+        )
+        if rendered.missing_placeholders:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Missing required placeholders: {', '.join(rendered.missing_placeholders)}"
+                ),
+            )
+        # Mutate payload fields so the existing create_message path works unchanged
+        payload.subject = rendered.subject
+        payload.body_text = rendered.body_text
+        payload.body_html = rendered.body_html
 
     message = create_message(db, payload, idempotency_key)
     try:

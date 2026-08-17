@@ -201,7 +201,7 @@ npm run build
 The following roadmap items are intentionally deferred beyond the current Phase 2 slice:
 
 - [ ] bulk/campaign sending and broader campaign lifecycle management
-- [ ] template builder, preview renderer, and placeholder validation
+- [x] template builder, preview renderer, and placeholder validation (Phase 3 — templates CRUD, `{{variable}}` rendering service, version history/rollback, HTML preview, placeholder inspector, extended `/messages/send` with template_id + variables)
 - [ ] contacts, lists, suppression models, and import wizard
 - [ ] inbox checker execution (only a placeholder route exists; later phases will support **operator-owned seed accounts only**)
 - [ ] full logs and analytics dashboards
