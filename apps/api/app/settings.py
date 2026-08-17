@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(default=60, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     app_encryption_key: str = Field(alias="APP_ENCRYPTION_KEY")
+    smtp_connect_timeout_seconds: int = Field(default=10, alias="SMTP_CONNECT_TIMEOUT_SECONDS")
     cors_origins_raw: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
     default_admin_username: str = Field(default="admin", alias="DEFAULT_ADMIN_USERNAME")
     default_admin_email: str = Field(default="admin@aegismail.local", alias="DEFAULT_ADMIN_EMAIL")

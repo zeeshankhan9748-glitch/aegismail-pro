@@ -2,24 +2,38 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoaderCircle } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { createSmtpProvider } from '@/lib/api';
+import { createSmtpProvider, updateSmtpProvider } from '@/lib/api';
 import type { SmtpProvider } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  host: z.string().min(1, 'Host is required'),
-  port: z.coerce.number().int().min(1).max(65535),
-  username: z.string().optional(),
-  password: z.string().optional(),
-  use_tls: z.boolean().default(true),
-});
+const schema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    host: z.string().min(1, 'Host is required'),
+    port: z.coerce.number().int().min(1).max(65535),
+    username: z.string().optional(),
+    password: z.string().optional(),
+    security: z.enum(['starttls', 'ssl', 'none']),
+    throttle_limit_per_minute: z.coerce.number().int().min(1).max(10000),
+  })
+  .transform((values) => ({
+    name: values.name,
+    host: values.host,
+    port: values.port,
+    username: values.username || undefined,
+    password: values.password || undefined,
+    use_tls: values.security === 'starttls',
+    use_ssl: values.security === 'ssl',
+    throttle_limit_per_minute: values.throttle_limit_per_minute,
+  }));
 
 type FormValues = z.input<typeof schema>;
 type FormOutput = z.output<typeof schema>;
@@ -30,10 +44,33 @@ const defaults: FormValues = {
   port: 587,
   username: '',
   password: '',
-  use_tls: true,
+  security: 'starttls',
+  throttle_limit_per_minute: 60,
 };
 
-export function SmtpProviderForm({ onCreated }: { onCreated: (provider: SmtpProvider) => void }) {
+function providerToDefaults(provider: SmtpProvider): FormValues {
+  return {
+    name: provider.name,
+    host: provider.host,
+    port: provider.port,
+    username: provider.username ?? '',
+    password: '',
+    security: provider.use_ssl ? 'ssl' : provider.use_tls ? 'starttls' : 'none',
+    throttle_limit_per_minute: provider.throttle_limit_per_minute,
+  };
+}
+
+export function SmtpProviderForm({
+  editingProvider,
+  onCreated,
+  onUpdated,
+  onCancelEdit,
+}: {
+  editingProvider?: SmtpProvider | null;
+  onCreated: (provider: SmtpProvider) => void;
+  onUpdated: (provider: SmtpProvider) => void;
+  onCancelEdit: () => void;
+}) {
   const {
     register,
     handleSubmit,
@@ -44,14 +81,25 @@ export function SmtpProviderForm({ onCreated }: { onCreated: (provider: SmtpProv
     defaultValues: defaults,
   });
 
+  useEffect(() => {
+    reset(editingProvider ? providerToDefaults(editingProvider) : defaults);
+  }, [editingProvider, reset]);
+
   const onSubmit = handleSubmit(async (values: FormOutput) => {
     try {
-      const provider = await createSmtpProvider(values);
-      toast.success('SMTP provider created');
-      onCreated(provider);
+      const provider = editingProvider
+        ? await updateSmtpProvider(editingProvider.id, values)
+        : await createSmtpProvider(values);
+      toast.success(editingProvider ? 'SMTP provider updated' : 'SMTP provider created');
+      if (editingProvider) {
+        onUpdated(provider);
+      } else {
+        onCreated(provider);
+      }
       reset(defaults);
+      onCancelEdit();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to create SMTP provider';
+      const message = error instanceof Error ? error.message : 'Unable to save SMTP provider';
       toast.error(message);
     }
   });
@@ -59,8 +107,8 @@ export function SmtpProviderForm({ onCreated }: { onCreated: (provider: SmtpProv
   return (
     <Card className="p-6">
       <div className="mb-5 space-y-1">
-        <h3 className="text-lg font-semibold">Create SMTP Provider</h3>
-        <p className="text-sm text-[var(--muted)]">This form uses React Hook Form + Zod and posts directly to the FastAPI scaffold.</p>
+        <h3 className="text-lg font-semibold">{editingProvider ? 'Edit SMTP Provider' : 'Create SMTP Provider'}</h3>
+        <p className="text-sm text-[var(--muted)]">Store SMTP credentials encrypted at rest, choose the connection mode, and set a simple provider throttle.</p>
       </div>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-4 md:grid-cols-2">
@@ -76,24 +124,47 @@ export function SmtpProviderForm({ onCreated }: { onCreated: (provider: SmtpProv
           <Field label="Username" error={errors.username?.message}>
             <Input {...register('username')} placeholder="mailer" />
           </Field>
-          <Field label="Password" error={errors.password?.message}>
-            <Input type="password" {...register('password')} placeholder="Stored encrypted on the API side" />
+          <Field label={editingProvider ? 'Password (leave blank to keep current)' : 'Password'} error={errors.password?.message}>
+            <Input type="password" {...register('password')} placeholder="Encrypted on the API side" />
           </Field>
-          <label className="flex items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)]">
-            <input type="checkbox" className="size-4" {...register('use_tls')} />
-            Require TLS
-          </label>
+          <Field label="Connection security">
+            <select
+              {...register('security')}
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none"
+            >
+              <option value="starttls">STARTTLS</option>
+              <option value="ssl">SSL/TLS</option>
+              <option value="none">None</option>
+            </select>
+          </Field>
+          <Field label="Throttle limit / minute" error={errors.throttle_limit_per_minute?.message?.toString()}>
+            <Input type="number" {...register('throttle_limit_per_minute')} />
+          </Field>
         </div>
-        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-          {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-          {isSubmitting ? 'Saving…' : 'Create provider'}
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+            {isSubmitting ? 'Saving…' : editingProvider ? 'Save changes' : 'Create provider'}
+          </Button>
+          {editingProvider ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                reset(defaults);
+                onCancelEdit();
+              }}
+            >
+              Cancel edit
+            </Button>
+          ) : null}
+        </div>
       </form>
     </Card>
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <label className="space-y-2 text-sm">
       <span className="font-medium">{label}</span>

@@ -15,6 +15,8 @@ class WorkerSettings(BaseSettings):
     )
 
     redis_url: str = Field(default='redis://localhost:6379/0', alias='REDIS_URL')
+    smtp_connect_timeout_seconds: int = Field(default=10, alias='SMTP_CONNECT_TIMEOUT_SECONDS')
+    smtp_max_send_attempts: int = Field(default=5, alias='SMTP_MAX_SEND_ATTEMPTS')
 
 
 @lru_cache

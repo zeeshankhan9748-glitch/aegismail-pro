@@ -2,7 +2,11 @@ import type { HTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
-export function Badge({ className, variant = 'default', ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'outline' | 'success' }) {
+export function Badge({
+  className,
+  variant = 'default',
+  ...props
+}: HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'outline' | 'success' | 'warning' | 'destructive' }) {
   return (
     <span
       className={cn(
@@ -10,6 +14,8 @@ export function Badge({ className, variant = 'default', ...props }: HTMLAttribut
         variant === 'default' && 'bg-[var(--foreground)]/10 text-[var(--foreground)]',
         variant === 'outline' && 'border border-[var(--card-border)] text-[var(--muted)]',
         variant === 'success' && 'bg-[var(--success-surface)] text-[var(--success)]',
+        variant === 'warning' && 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200',
+        variant === 'destructive' && 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200',
         className,
       )}
       {...props}

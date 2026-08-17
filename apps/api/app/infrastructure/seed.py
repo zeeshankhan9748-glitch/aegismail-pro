@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from app.application.security import encrypt_secret, hash_api_key, hash_password
+from app.application.security import hash_api_key, hash_password
 from app.domain.models import APIKey, Role, SenderIdentity, SMTPProvider, User
 from app.infrastructure.database import Base, SessionLocal, engine
 from app.settings import get_settings
@@ -49,14 +49,24 @@ def seed() -> None:
         if provider is None:
             provider = SMTPProvider(
                 name="Demo SMTP",
-                host="smtp.demo.local",
-                port=587,
-                username="demo-user",
-                password_encrypted=encrypt_secret(settings.demo_smtp_password),
-                use_tls=True,
+                host="mailpit",
+                port=1025,
+                username=None,
+                password_encrypted=None,
+                use_tls=False,
+                use_ssl=False,
+                throttle_limit_per_minute=60,
             )
             session.add(provider)
             session.flush()
+        else:
+            provider.host = "mailpit"
+            provider.port = 1025
+            provider.username = None
+            provider.password_encrypted = None
+            provider.use_tls = False
+            provider.use_ssl = False
+            provider.throttle_limit_per_minute = 60
 
         identity = session.scalar(
             select(SenderIdentity).where(SenderIdentity.from_email == "noreply@demo.local")

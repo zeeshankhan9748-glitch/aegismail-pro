@@ -7,7 +7,7 @@ export default function SmtpProvidersPage() {
       <PageHeader
         eyebrow="Configuration"
         title="SMTP Providers"
-        description="A working Phase 1 slice backed by the FastAPI scaffold. Create provider profiles, inspect stored records, and validate the end-to-end shape for future sending workflows."
+        description="Create or edit encrypted SMTP provider profiles, test live SMTP connectivity, and prepare providers for Celery-backed message delivery."
       />
       <SmtpProvidersView />
     </div>
