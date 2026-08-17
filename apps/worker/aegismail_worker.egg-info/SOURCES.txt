@@ -5,6 +5,7 @@ aegismail_worker.egg-info/SOURCES.txt
 aegismail_worker.egg-info/dependency_links.txt
 aegismail_worker.egg-info/requires.txt
 aegismail_worker.egg-info/top_level.txt
+tests/test_import_jobs.py
 tests/test_tasks.py
 worker_app/__init__.py
 worker_app/api_bridge.py

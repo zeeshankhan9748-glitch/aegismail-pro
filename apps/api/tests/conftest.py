@@ -12,10 +12,15 @@ os.environ.setdefault("CORS_ORIGINS", "http://localhost:3000")
 
 from app.domain.models import (  # noqa: F401
     APIKey,
+    Contact,
+    ContactList,
+    ContactListMember,
+    ImportJob,
     Message,
     Role,
     SenderIdentity,
     SMTPProvider,
+    SuppressionEntry,
     Template,
     TemplateVersion,
     User,
