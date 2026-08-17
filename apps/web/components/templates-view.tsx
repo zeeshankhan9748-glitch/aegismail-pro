@@ -481,7 +481,7 @@ function TemplateEditor({ templateId, onBack }: { templateId: number; onBack: ()
                 ) : preview.body_html ? (
                   <iframe
                     srcDoc={preview.body_html}
-                    sandbox="allow-same-origin"
+                    sandbox=""
                     className="w-full h-48 rounded-xl border border-[var(--card-border)]"
                     title="Email preview"
                   />
