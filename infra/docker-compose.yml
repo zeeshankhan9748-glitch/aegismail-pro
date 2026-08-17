@@ -31,7 +31,7 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ******postgres:5432/aegismail
+      DATABASE_URL: postgresql+psycopg://aegismail:aegismail@postgres:5432/aegismail
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: http://localhost:3000
     depends_on:
@@ -54,7 +54,7 @@ services:
       - ../.env
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: ******postgres:5432/aegismail
+      DATABASE_URL: postgresql+psycopg://aegismail:aegismail@postgres:5432/aegismail
     depends_on:
       redis:
         condition: service_healthy

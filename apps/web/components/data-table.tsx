@@ -31,6 +31,8 @@ export function DataTable<TData>({
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
+  // TanStack Table intentionally exposes non-memoizable helpers here.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

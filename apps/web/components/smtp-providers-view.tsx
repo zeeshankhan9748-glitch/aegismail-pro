@@ -19,14 +19,14 @@ export function SmtpProvidersView() {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadProviders = useCallback(async () => {
-    const rows = await listSmtpProviders();
-    setProviders(rows);
+    return listSmtpProviders();
   }, []);
 
   const refreshProviders = useCallback(async () => {
     try {
       setRefreshing(true);
-      await loadProviders();
+      const rows = await loadProviders();
+      setProviders(rows);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to fetch SMTP providers';
       toast.error(message);
@@ -40,7 +40,7 @@ export function SmtpProvidersView() {
 
     const fetchInitialProviders = async () => {
       try {
-        const rows = await listSmtpProviders();
+        const rows = await loadProviders();
         if (active) {
           setProviders(rows);
         }

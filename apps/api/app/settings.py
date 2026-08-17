@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     database_url: str = Field(
-        default="******localhost:5432/aegismail",
+        default="postgresql+psycopg://aegismail:aegismail@localhost:5432/aegismail",
         alias="DATABASE_URL",
     )
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
