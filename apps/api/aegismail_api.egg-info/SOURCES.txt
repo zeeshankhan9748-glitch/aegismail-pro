@@ -20,6 +20,7 @@ app/application/services/messages.py
 app/application/services/sender_identities.py
 app/application/services/smtp_delivery.py
 app/application/services/smtp_providers.py
+app/application/services/templates.py
 app/domain/__init__.py
 app/domain/models.py
 app/infrastructure/__init__.py
@@ -32,7 +33,9 @@ app/interfaces/routers/health.py
 app/interfaces/routers/messages.py
 app/interfaces/routers/sender_identities.py
 app/interfaces/routers/smtp_providers.py
+app/interfaces/routers/templates.py
 tests/test_health.py
 tests/test_messages.py
 tests/test_sender_identities.py
 tests/test_smtp_providers.py
+tests/test_templates.py

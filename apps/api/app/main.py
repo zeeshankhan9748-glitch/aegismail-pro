@@ -7,7 +7,14 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.infrastructure.database import Base, engine
-from app.interfaces.routers import auth, health, messages, sender_identities, smtp_providers
+from app.interfaces.routers import (
+    auth,
+    health,
+    messages,
+    sender_identities,
+    smtp_providers,
+    templates,
+)
 from app.logging import configure_logging
 from app.rate_limit import limiter
 from app.settings import get_settings
@@ -42,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(smtp_providers.router, prefix="/api/v1")
     app.include_router(sender_identities.router, prefix="/api/v1")
     app.include_router(messages.router, prefix="/api/v1")
+    app.include_router(templates.router, prefix="/api/v1")
     Instrumentator().instrument(app).expose(app, include_in_schema=False, should_gzip=True)
     return app
 

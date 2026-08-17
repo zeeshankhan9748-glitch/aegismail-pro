@@ -87,8 +87,64 @@ export type MessageSendRequest = {
   provider_id: number;
   sender_identity_id: number;
   recipient_email: string;
-  subject: string;
-  body_text: string;
+  subject?: string;
+  body_text?: string;
   body_html?: string;
   idempotency_key?: string;
+  template_id?: number;
+  template_version_id?: number;
+  variables?: Record<string, string>;
+};
+
+// ---------------------------------------------------------------------------
+// Templates
+// ---------------------------------------------------------------------------
+
+export type TemplateVersion = {
+  id: number;
+  template_id: number;
+  version_number: number;
+  subject_template: string;
+  body_html_template: string | null;
+  body_text_template: string;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type Template = {
+  id: number;
+  name: string;
+  description: string | null;
+  current_version_id: number | null;
+  created_at: string;
+  updated_at: string;
+  current_version: TemplateVersion | null;
+};
+
+export type TemplateSummary = {
+  id: number;
+  name: string;
+  description: string | null;
+  current_version_id: number | null;
+  updated_at: string;
+};
+
+export type PlaceholderInspectorResult = {
+  used_placeholders: string[];
+  missing_placeholders: string[];
+  unknown_payload_keys: string[];
+  all_present: boolean;
+};
+
+export type TemplatePreviewResponse = {
+  subject: string;
+  body_html: string | null;
+  body_text: string;
+  inspector: PlaceholderInspectorResult;
+  html_safety_warnings: string[];
+};
+
+export type TemplateValidateResponse = {
+  valid: boolean;
+  missing_placeholders: string[];
 };

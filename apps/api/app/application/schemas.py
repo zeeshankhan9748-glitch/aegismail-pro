@@ -83,10 +83,24 @@ class MessageSendRequest(BaseModel):
     provider_id: int
     sender_identity_id: int
     recipient_email: EmailStr
-    subject: str = Field(min_length=1, max_length=255)
-    body_text: str = Field(min_length=1)
+    subject: str | None = Field(default=None, min_length=1, max_length=255)
+    body_text: str | None = Field(default=None, min_length=1)
     body_html: str | None = None
     idempotency_key: str | None = Field(default=None, min_length=1, max_length=255)
+    # Template-based sending (alternative to raw subject/body)
+    template_id: int | None = None
+    template_version_id: int | None = None
+    variables: dict[str, str] | None = None
+
+    @model_validator(mode="after")
+    def validate_content_source(self) -> "MessageSendRequest":
+        has_raw = bool(self.subject and self.body_text)
+        has_template = self.template_id is not None
+        if not has_raw and not has_template:
+            raise ValueError(
+                "Provide either (subject + body_text) or (template_id) as the message content source"
+            )
+        return self
 
 
 class MessageRead(BaseModel):
@@ -136,3 +150,91 @@ class MessageListResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     detail: str
+
+
+# ---------------------------------------------------------------------------
+# Templates
+# ---------------------------------------------------------------------------
+
+class TemplateVersionCreate(BaseModel):
+    subject_template: str = Field(min_length=1, max_length=255)
+    body_html_template: str | None = None
+    body_text_template: str = Field(min_length=1)
+    created_by: str | None = None
+
+
+class TemplateCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = None
+    subject_template: str = Field(min_length=1, max_length=255)
+    body_html_template: str | None = None
+    body_text_template: str = Field(min_length=1)
+
+
+class TemplateUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = None
+
+
+class TemplateVersionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    template_id: int
+    version_number: int
+    subject_template: str
+    body_html_template: str | None
+    body_text_template: str
+    created_at: datetime
+    created_by: str | None
+
+
+class TemplateRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    current_version_id: int | None
+    created_at: datetime
+    updated_at: datetime
+    current_version: TemplateVersionRead | None = None
+
+
+class TemplateSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    current_version_id: int | None
+    updated_at: datetime
+
+
+class PlaceholderInspectorResult(BaseModel):
+    used_placeholders: list[str]
+    missing_placeholders: list[str]
+    unknown_payload_keys: list[str]
+    all_present: bool
+
+
+class TemplatePreviewRequest(BaseModel):
+    variables: dict[str, str] = Field(default_factory=dict)
+    version_id: int | None = None
+
+
+class TemplatePreviewResponse(BaseModel):
+    subject: str
+    body_html: str | None
+    body_text: str
+    inspector: PlaceholderInspectorResult
+    html_safety_warnings: list[str]
+
+
+class TemplateValidateRequest(BaseModel):
+    variables: dict[str, str] = Field(default_factory=dict)
+
+
+class TemplateValidateResponse(BaseModel):
+    valid: bool
+    missing_placeholders: list[str]
