@@ -34,8 +34,13 @@ def _throttle_delay_seconds(provider: SMTPProvider) -> int:
             window.popleft()
         if len(window) >= limit:
             return max(1, math.ceil(60 - (now - window[0])))
-        window.append(now)
     return 0
+
+
+def _record_provider_send(provider_id: int) -> None:
+    now = time.monotonic()
+    with _provider_windows_lock:
+        _provider_windows[provider_id].append(now)
 
 
 @celery_app.task(bind=True, max_retries=settings.smtp_max_send_attempts)
@@ -94,6 +99,7 @@ def send_email_task(self, message_id: int) -> dict[str, str | int]:
         message.status = "sent"
         message.error_message = None
         message.sent_at = utcnow()
+        _record_provider_send(provider.id)
         session.add(message)
         session.commit()
         return {"status": "sent", "message_id": message_id, "attempt_count": message.attempt_count}

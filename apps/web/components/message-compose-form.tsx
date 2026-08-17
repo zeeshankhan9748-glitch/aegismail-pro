@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LoaderCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -39,8 +39,8 @@ export function MessageComposeForm({
   const {
     register,
     handleSubmit,
-    watch,
     reset,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues, unknown, FormOutput>({
@@ -56,9 +56,7 @@ export function MessageComposeForm({
     },
   });
 
-  // React Hook Form exposes non-memoizable watch helpers here.
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const providerId = watch('provider_id');
+  const providerId = useWatch({ control, name: 'provider_id' });
   const availableSenderIdentities = useMemo(
     () => senderIdentities.filter((identity) => identity.smtp_provider_id === providerId),
     [providerId, senderIdentities],

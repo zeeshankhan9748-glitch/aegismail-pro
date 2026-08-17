@@ -17,38 +17,28 @@ class UserResponse(BaseModel):
     role: str
 
 
-class SMTPProviderCreate(BaseModel):
+class SMTPProviderBase(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     host: str = Field(min_length=1, max_length=255)
     port: int = Field(ge=1, le=65535)
     username: str | None = Field(default=None, max_length=255)
+    use_tls: bool = True
+    use_ssl: bool = False
+    throttle_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
+
+    @model_validator(mode="after")
+    def validate_security_mode(self) -> "SMTPProviderBase":
+        if self.use_tls and self.use_ssl:
+            raise ValueError("TLS and SSL cannot both be enabled at the same time")
+        return self
+
+
+class SMTPProviderCreate(SMTPProviderBase):
     password: str | None = Field(default=None, min_length=1, max_length=255)
-    use_tls: bool = True
-    use_ssl: bool = False
-    throttle_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
-
-    @model_validator(mode="after")
-    def validate_security_mode(self) -> "SMTPProviderCreate":
-        if self.use_tls and self.use_ssl:
-            raise ValueError("TLS and SSL cannot both be enabled at the same time")
-        return self
 
 
-class SMTPProviderUpdate(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    host: str = Field(min_length=1, max_length=255)
-    port: int = Field(ge=1, le=65535)
-    username: str | None = Field(default=None, max_length=255)
+class SMTPProviderUpdate(SMTPProviderBase):
     password: str | None = Field(default=None, max_length=255)
-    use_tls: bool = True
-    use_ssl: bool = False
-    throttle_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
-
-    @model_validator(mode="after")
-    def validate_security_mode(self) -> "SMTPProviderUpdate":
-        if self.use_tls and self.use_ssl:
-            raise ValueError("TLS and SSL cannot both be enabled at the same time")
-        return self
 
 
 class SMTPProviderRead(BaseModel):
