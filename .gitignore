@@ -12,4 +12,5 @@ apps/web/.next/
 apps/web/coverage/
 apps/web/test-results/
 *.sqlite3
+*.db
 dist/

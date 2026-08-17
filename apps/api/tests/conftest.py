@@ -10,7 +10,7 @@ os.environ["JWT_SECRET"] = "test-secret-with-sufficient-length-123456"
 os.environ["APP_ENCRYPTION_KEY"] = "zBCLvKftVYqfN2UhcJqj7A29qa0mWdddwG4QzaHm9yY="
 os.environ.setdefault("CORS_ORIGINS", "http://localhost:3000")
 
-from app.domain.models import APIKey, Role, SenderIdentity, SMTPProvider, User  # noqa: F401
+from app.domain.models import APIKey, Message, Role, SenderIdentity, SMTPProvider, User  # noqa: F401
 from app.infrastructure.database import Base, engine
 from app.main import app
 

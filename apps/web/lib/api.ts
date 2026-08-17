@@ -1,4 +1,13 @@
-import type { SmtpProvider, SmtpProviderCreate } from '@/lib/types';
+import type {
+  Message,
+  MessageListResponse,
+  MessageSendRequest,
+  SenderIdentity,
+  SenderIdentityCreate,
+  SmtpProvider,
+  SmtpProviderConnectionTest,
+  SmtpProviderCreate,
+} from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 
@@ -29,4 +38,49 @@ export function createSmtpProvider(payload: SmtpProviderCreate) {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export function updateSmtpProvider(providerId: number, payload: SmtpProviderCreate) {
+  return request<SmtpProvider>(`/smtp-providers/${providerId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function testSmtpProviderConnection(providerId: number) {
+  return request<SmtpProviderConnectionTest>(`/smtp-providers/${providerId}/test-connection`, {
+    method: 'POST',
+  });
+}
+
+export function listSenderIdentities() {
+  return request<SenderIdentity[]>('/sender-identities');
+}
+
+export function createSenderIdentity(payload: SenderIdentityCreate) {
+  return request<SenderIdentity>('/sender-identities', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function sendMessage(payload: MessageSendRequest) {
+  return request<Message>('/messages/send', {
+    method: 'POST',
+    headers: payload.idempotency_key ? { 'Idempotency-Key': payload.idempotency_key } : undefined,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listMessages(status?: string) {
+  const params = new URLSearchParams();
+  if (status && status !== 'all') {
+    params.set('status', status);
+  }
+  const suffix = params.size ? `?${params.toString()}` : '';
+  return request<MessageListResponse>(`/messages${suffix}`);
+}
+
+export function getMessage(messageId: number) {
+  return request<Message>(`/messages/${messageId}`);
 }

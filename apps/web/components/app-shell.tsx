@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Boxes, ChevronsLeftRightEllipsis, ContactRound, Gauge, Inbox, LayoutDashboard, Logs, Menu, Settings2 } from 'lucide-react';
+import { Boxes, ChevronsLeftRightEllipsis, ContactRound, Gauge, Inbox, LayoutDashboard, Logs, Mail, Menu, Settings2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
@@ -18,6 +18,7 @@ const navItems = [
   { href: '/templates', label: 'Templates', icon: Boxes },
   { href: '/contacts', label: 'Contacts', icon: ContactRound },
   { href: '/smtp-providers', label: 'SMTP Providers', icon: ChevronsLeftRightEllipsis },
+  { href: '/messages', label: 'Messages', icon: Mail },
   { href: '/inbox-checker', label: 'Inbox Checker', icon: Inbox },
   { href: '/logs', label: 'Logs', icon: Logs },
   { href: '/settings', label: 'Settings', icon: Settings2 },
@@ -42,7 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mb-8 flex items-center justify-between gap-3 px-2">
           <div className={cn('overflow-hidden transition-all', collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100')}>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted)]">AegisMail Pro</p>
-            <p className="text-lg font-semibold">Phase 1 Console</p>
+            <p className="text-lg font-semibold">Phase 2 Console</p>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setCollapsed((value) => !value)} aria-label="Toggle sidebar">
             <Menu className="size-4" />

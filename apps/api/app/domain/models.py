@@ -68,11 +68,14 @@ class SMTPProvider(Base):
     username: Mapped[str | None] = mapped_column(String(255))
     password_encrypted: Mapped[str | None] = mapped_column(Text)
     use_tls: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    use_ssl: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    throttle_limit_per_minute: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )
 
     sender_identities: Mapped[list["SenderIdentity"]] = relationship(back_populates="smtp_provider")
+    messages: Mapped[list["Message"]] = relationship(back_populates="provider")
 
 
 class SenderIdentity(Base):
@@ -88,3 +91,30 @@ class SenderIdentity(Base):
     )
 
     smtp_provider: Mapped["SMTPProvider"] = relationship(back_populates="sender_identities")
+    messages: Mapped[list["Message"]] = relationship(back_populates="sender_identity")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    provider_id: Mapped[int] = mapped_column(ForeignKey("smtp_providers.id"), nullable=False)
+    sender_identity_id: Mapped[int] = mapped_column(ForeignKey("sender_identities.id"), nullable=False)
+    recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    body_text: Mapped[str] = mapped_column(Text, nullable=False)
+    body_html: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(32), default="queued", nullable=False)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    idempotency_key: Mapped[str | None] = mapped_column(String(255), unique=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    provider: Mapped["SMTPProvider"] = relationship(back_populates="messages")
+    sender_identity: Mapped["SenderIdentity"] = relationship(back_populates="messages")

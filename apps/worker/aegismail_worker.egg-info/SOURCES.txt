@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+aegismail_worker.egg-info/PKG-INFO
+aegismail_worker.egg-info/SOURCES.txt
+aegismail_worker.egg-info/dependency_links.txt
+aegismail_worker.egg-info/requires.txt
+aegismail_worker.egg-info/top_level.txt
+tests/test_tasks.py
+worker_app/__init__.py
+worker_app/api_bridge.py
+worker_app/celery_app.py
+worker_app/settings.py
+worker_app/tasks.py
